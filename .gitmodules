@@ -1,0 +1,12 @@
+[submodule "submodules/cloud-pak-launch-cli"]
+	path = submodules/cloud-pak-launch-cli
+	url = git@github.ibm.com:CloudPakOpenContent/cloud-pak-launch-cli.git
+[submodule "submodules/cloud-pak-airgap-cli"]
+	path = submodules/cloud-pak-airgap-cli
+	url = git@github.ibm.com:IBMPrivateCloud/cloud-pak-airgap-cli.git
+[submodule "stable/ibm-auditwebhook-operator-case-bundle/operators/ibm-auditwebhook-operator/cp4d-audit-webhook"]
+	path = stable/ibm-auditwebhook-operator-case-bundle/operators/ibm-auditwebhook-operator/cp4d-audit-webhook
+	url = git@github.ibm.com:watson-foundation-services/cp4d-audit-webhook.git
+[submodule "stable/ibm-auditwebhook-operator-case-bundle/operators/cp4d-audit-webhook-operator"]
+	path = stable/ibm-auditwebhook-operator-case-bundle/operators/cp4d-audit-webhook-operator
+	url = git@github.ibm.com:watson-foundation-services/cp4d-audit-webhook-operator.git

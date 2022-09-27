@@ -1,0 +1,202 @@
+---
+dist: xenial
+sudo: required
+group: bluezone
+language: go
+go:
+  - "1.17"
+services:
+  - docker
+
+# Environment variables (setup endpoint to IBM gitdocker-buildhub)
+env:
+  global:
+    - OCTOKIT_API_ENDPOINT="https://github.ibm.com/api/v3/"
+    - GOPRIVATE=github.ibm.com
+    - OPERATOR_SDK_RELEASE_VERSION=v1.6.2
+    - OPERATOR_VERSION=v0.7.7
+    - BUNDLE_VERSION=v0.2.8
+    - CATALOG_VERSION=v0.2.8
+    - OPENCONTENT_AUDIT_WEBHOOK_VERSION=v0.1.4
+    - OPENCONTENT_FLUENTD_VERSION=ruby-ubi-tt-1.3.0
+    #- TRAVIS_TAG=delta-ga-2022-07-09
+    #- CV_TEST_INSTANCE_ADDR=api.460-ocp-b22.purple-chesterfield.com
+    #- CV_TEST_SELECTION="test-op-olm|est-op-pre-cert"
+
+before_install:
+  # Clone build tools & set tools path for follow on processing
+  # The clone command will use the ssh key from the travis settings to clone the repo from github.ibm.com
+  - git config --global url."git@github.ibm.com:".insteadOf "https://github.ibm.com/"
+  - if [[ ! -z "$BRANCH_OVERRIDE" ]] ; then
+    git clone -b $BRANCH_OVERRIDE git@github.ibm.com:ibmprivatecloud/content-tools;
+    else
+    git clone git@github.ibm.com:ibmprivatecloud/content-tools;
+    fi
+  - export toolsPath=`pwd`/content-tools/travis-tools/
+  # Install dependencies & determine chart delta
+  - $toolsPath/build/bin/installDependencies.sh
+  - export changeList=`$toolsPath/build/bin/determineChartDelta.sh | tee determineChartDelta.out | grep 'return determineChartDelta:' | cut -f2 -d:` && cat determineChartDelta.out
+  # Create an older operator-sdk directory structure compatible with cv lint
+  - mkdir -p stable/ibm-auditwebhook-operator-case-bundle/operators/ibm-auditwebhook-operator/deploy
+  - cd stable/ibm-auditwebhook-operator-case-bundle/operators/ibm-auditwebhook-operator/ && cd ../../../../
+  # populate READMEs
+  - cp README.md stable/ibm-auditwebhook-operator-case-bundle/operators/ibm-auditwebhook-operator/
+  #- cp README.md stable/ibm-auditwebhook-case-bundle/case/ibm-auditwebhook-operator/
+  # Install podman on Ubuntu.
+  # https://github.com/containers/libpod/blob/master/install.md#ubuntu
+  - sudo add-apt-repository -y ppa:projectatomic/ppa
+  - sudo apt-get update -qq
+  - sudo apt-get -qq -y install podman uidmap strace buildah runc curl tar make
+  - curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_RELEASE_VERSION}/operator-sdk-${OPERATOR_SDK_RELEASE_VERSION}-x86_64-linux-gnu
+  - chmod +x operator-sdk-${OPERATOR_SDK_RELEASE_VERSION}-x86_64-linux-gnu && sudo cp operator-sdk-${OPERATOR_SDK_RELEASE_VERSION}-x86_64-linux-gnu /usr/local/bin/operator-sdk && rm operator-sdk-${OPERATOR_SDK_RELEASE_VERSION}-x86_64-linux-gnu
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  - wget https://github.com/operator-framework/operator-registry/releases/download/v1.15.1/linux-amd64-opm
+  - sudo mv linux-amd64-opm /opm
+  - sudo chmod +x /opm
+  - sudo apt-get install skopeo
+  - wget https://github.com/npryce/adr-tools/archive/3.0.0.tar.gz
+  - tar -zxvf 3.0.0.tar.gz
+  - cd adr-tools-3.0.0 && make && sudo mv src/* /usr/local/bin/ && cd ../
+  # Required to run buildah
+  - sudo chgrp -R 0 /run
+  - sudo chmod -R g+rwX /run
+
+jobs:
+  fast_finish: true
+  include:
+#    - stage: Build Production Operand and Related Images
+#      script:
+#        - sudo docker login -u iamapikey -p $ENTITLED_STG_TOKEN cp.stg.icr.io
+#        - sudo docker pull cp.stg.icr.io/cp/opencontent-audit-webhook:${OPENCONTENT_AUDIT_WEBHOOK_VERSION}
+#        - sudo docker pull cp.stg.icr.io/cp/opencontent-fluentd:${OPENCONTENT_FLUENTD_VERSION}
+#        - sudo docker tag cp.stg.icr.io/cp/opencontent-audit-webhook:${OPENCONTENT_AUDIT_WEBHOOK_VERSION} cp.icr.io/cp/opencontent-audit-webhook:${OPENCONTENT_AUDIT_WEBHOOK_VERSION}
+#        - sudo docker tag cp.stg.icr.io/cp/opencontent-fluentd:${OPENCONTENT_FLUENTD_VERSION} cp.icr.io/cp/opencontent-fluentd:${OPENCONTENT_FLUENTD_VERSION}
+#        - sudo docker push cp.icr.io/cp/opencontent-audit-webhook:${OPENCONTENT_AUDIT_WEBHOOK_VERSION}
+#        - sudo docker push cp.icr.io/cp/opencontent-fluentd:${OPENCONTENT_FLUENTD_VERSION}
+
+    - stage: Build and Push Images to Stage
+      # auditwebhook Operator, operator is pulled instead of being built
+      script:
+        ## Commented section pushes bundle and catalog images to Stage
+        - cd stable/ibm-auditwebhook-operator-case-bundle/operators/cp4d-audit-webhook-operator/
+        - sudo docker login -u iamapikey -p $ENTITLED_STG_TOKEN cp.stg.icr.io
+        #OPERATOR IMG
+        #- export OPERATOR_IMG=cp.stg.icr.io/cp/ibm-auditwebhook-operator:${OPERATOR_VERSION}.${TRAVIS_BUILD_NUMBER}
+        - export OPERATOR_IMG=cp.stg.icr.io/cp/ibm-auditwebhook-operator:${OPERATOR_VERSION}
+#        - sudo docker build -t ${OPERATOR_IMG} .
+#        - sudo docker push ${OPERATOR_IMG}
+        - sudo docker pull ${OPERATOR_IMG}
+        - export OP_DIGEST=$(sudo docker image inspect --format '{{index .RepoDigests 0}}' ${OPERATOR_IMG} | cut -d '@' -f2)
+        - export OPERATOR_IMG_STG_DIGEST=cp.stg.icr.io/cp/ibm-auditwebhook-operator@${OP_DIGEST}
+        - echo ${OPERATOR_IMG_STG_DIGEST}
+        - export CSV=${TRAVIS_BUILD_DIR}/stable/ibm-auditwebhook-operator-case-bundle/operators/cp4d-audit-webhook-operator/bundle/manifests/cp4d-audit-webhook-operator.clusterserviceversion.yaml
+        - echo $CSV
+        - export oldImage=$(cat $CSV | grep containerImage| awk '{print $2}')
+        - echo Old image is $oldImage
+        - sed -i -e "s~$oldImage~$OPERATOR_IMG_STG_DIGEST~g" $CSV
+        - cat ${TRAVIS_BUILD_DIR}/stable/ibm-auditwebhook-operator-case-bundle/operators/cp4d-audit-webhook-operator/bundle/manifests/cp4d-audit-webhook-operator.clusterserviceversion.yaml
+        #Bundle Image
+        #- export BUNDLE_IMG=cp.stg.icr.io/cp/ibm-auditwebhook-operator-bundle:${BUNDLE_VERSION}.${TRAVIS_BUILD_NUMBER}
+        - export BUNDLE_IMG=cp.stg.icr.io/cp/ibm-auditwebhook-operator-bundle:${BUNDLE_VERSION}
+        - sudo BUNDLE_IMG=${BUNDLE_IMG} make bundle-build
+        - sudo docker push ${BUNDLE_IMG}
+        - export BUNDLE_DIGEST=$(sudo docker image inspect --format '{{index .RepoDigests 0}}' ${BUNDLE_IMG} | cut -d '@' -f2)
+        - export BUNDLE_IMG_STG_DIG=cp.stg.icr.io/cp/ibm-auditwebhook-operator-bundle@${BUNDLE_DIGEST}
+        #CATALOG IMG
+        #- export CATALOG_IMG=cp.stg.icr.io/cp/ibm-auditwebhook-operator-catalog:${CATALOG_VERSION}.${TRAVIS_BUILD_NUMBER}
+        - export CATALOG_IMG=cp.stg.icr.io/cp/ibm-auditwebhook-operator-catalog:${CATALOG_VERSION}
+        - rm -f bundles.db
+        - sudo /opm registry add -b ${BUNDLE_IMG_STG_DIG}  -d bundles.db
+        - sudo docker login registry.redhat.io -u fan.zhang -p $REDHAT_PASS
+        - sudo docker build -f catalog.Dockerfile -t ${CATALOG_IMG} .
+        - sudo docker push ${CATALOG_IMG}
+        - echo ${CATALOG_IMG}
+        - export CATALOG_DIGEST=$(sudo docker image inspect --format '{{index .RepoDigests 0}}' ${CATALOG_IMG} | cut -d '@' -f2)
+        - export CATALOG_IMG_STG_DIG=cp.stg.icr.io/cp/ibm-auditwebhook-operator-catalog@${CATALOG_DIGEST}
+        #Display images
+        - echo ${OPERATOR_IMG_STG_DIG}
+        - echo ${BUNDLE_IMG_STG_DIG}
+        - echo ${CATALOG_IMG_STG_DIG}
+        - echo ${OPERATOR_VERSION}
+        - echo ${OPERATOR_VERSION}.${TRAVIS_BUILD_NUMBER}
+        - cd ../../../../
+
+    - stage: Build and Push Images to Prod
+      if: (tag IS present)
+      script:
+        ## Commented section pushed bundle and catalog image to prod
+        - cd stable/ibm-auditwebhook-operator-case-bundle/operators/cp4d-audit-webhook-operator/
+        - sudo docker login -u iamapikey -p $ENTITLED_STG_TOKEN cp.stg.icr.io
+        #Operator Images
+        - skopeo copy docker://cp.stg.icr.io/cp/ibm-auditwebhook-operator:${OPERATOR_VERSION} docker://icr.io/cpopen/ibm-auditwebhook-operator:${OPERATOR_VERSION} --src-creds iamapikey:$ENTITLED_STG_TOKEN --dest-creds iamapikey:$ICR_CPOPEN_TOKEN
+        - curl https://$GITHUB_TOKEN@raw.github.ibm.com/CloudPakOpenContent/image-signing/main/bin/signandwait.sh | bash /dev/stdin ibm-auditwebhook-operator ${OPERATOR_VERSION} --wait true --debug
+        - export OPERATOR_IMG_PRD=icr.io/cpopen/ibm-auditwebhook-operator:${OPERATOR_VERSION}
+        - sudo docker pull ${OPERATOR_IMG_PRD}
+        - export OP_DIGEST=$(sudo docker image inspect --format '{{index .RepoDigests 0}}' ${OPERATOR_IMG_PRD} | cut -d '@' -f2)
+        - export OPERATOR_IMG_PRD_DIGEST=icr.io/cpopen/ibm-auditwebhook-operator@${OP_DIGEST}
+        - echo ${OPERATOR_IMG_PRD_DIGEST}
+        - export CSV=${TRAVIS_BUILD_DIR}/stable/ibm-auditwebhook-operator-case-bundle/operators/cp4d-audit-webhook-operator/bundle/manifests/cp4d-audit-webhook-operator.clusterserviceversion.yaml
+        - export oldImage=$(cat $CSV | grep containerImage| awk '{print $2}')
+        - echo Old image is $oldImage
+        - sed -i -e "s~$oldImage~$OPERATOR_IMG_PRD_DIGEST~g" $CSV
+        - cat ${TRAVIS_BUILD_DIR}/stable/ibm-auditwebhook-operator-case-bundle/operators/cp4d-audit-webhook-operator/bundle/manifests/cp4d-audit-webhook-operator.clusterserviceversion.yaml
+        #Bundle images
+        - export BUNDLE_IMG_STG=cp.stg.icr.io/cp/ibm-auditwebhook-operator-bundle:${BUNDLE_VERSION}
+        - sudo docker build -f bundle.Dockerfile -t ${BUNDLE_IMG_STG} .
+        - sudo docker push ${BUNDLE_IMG_STG}
+        - skopeo copy docker://cp.stg.icr.io/cp/ibm-auditwebhook-operator-bundle:${BUNDLE_VERSION} docker://icr.io/cpopen/ibm-auditwebhook-operator-bundle:${BUNDLE_VERSION} --src-creds iamapikey:$ENTITLED_STG_TOKEN --dest-creds iamapikey:$ICR_CPOPEN_TOKEN
+        - curl https://$GITHUB_TOKEN@raw.github.ibm.com/CloudPakOpenContent/image-signing/main/bin/signandwait.sh | bash /dev/stdin ibm-auditwebhook-operator-bundle ${BUNDLE_VERSION} --wait true --debug
+        - export BUNDLE_IMG_PRD=icr.io/cpopen/ibm-auditwebhook-operator-bundle:${BUNDLE_VERSION}
+        - echo ${BUNDLE_IMG_PRD}
+        - sudo docker pull ${BUNDLE_IMG_PRD}
+        - export BUNDLE_DIGEST=$(sudo docker image inspect --format '{{index .RepoDigests 0}}' ${BUNDLE_IMG_PRD} | cut -d '@' -f2)
+        - export BUNDLE_IMG_PRD_DIGEST=icr.io/cpopen/ibm-auditwebhook-operator-bundle@${BUNDLE_DIGEST}
+        - echo ${BUNDLE_IMG_PRD_DIGEST}
+        #Catalog Images
+        - export CATALOG_IMG_STG=cp.stg.icr.io/cp/ibm-auditwebhook-operator-catalog:${CATALOG_VERSION}
+        - rm -f bundles.db
+        - sudo /opm registry add -b icr.io/cpopen/ibm-auditwebhook-operator-bundle@${BUNDLE_DIGEST}  -d bundles.db
+        - sudo docker login registry.redhat.io -u fan.zhang -p $REDHAT_PASS
+        - sudo docker build -f catalog.Dockerfile -t ${CATALOG_IMG_STG} .
+        - sudo docker push ${CATALOG_IMG_STG}
+        - skopeo copy docker://cp.stg.icr.io/cp/ibm-auditwebhook-operator-catalog:${CATALOG_VERSION} docker://icr.io/cpopen/ibm-auditwebhook-operator-catalog:${CATALOG_VERSION}  --src-creds iamapikey:$ENTITLED_STG_TOKEN --dest-creds iamapikey:$ICR_CPOPEN_TOKEN
+        - curl https://$GITHUB_TOKEN@raw.github.ibm.com/CloudPakOpenContent/image-signing/main/bin/signandwait.sh | bash /dev/stdin ibm-auditwebhook-operator-catalog ${CATALOG_VERSION} --wait true --debug
+        - export CATALOG_IMG_PRD=icr.io/cpopen/ibm-auditwebhook-operator-catalog:${CATALOG_VERSION}
+        - echo ${CATALOG_IMG_PRD}
+        - sudo docker pull ${CATALOG_IMG_PRD}
+        - export CATALOG_DIGEST=$(sudo docker image inspect --format '{{index .RepoDigests 0}}' ${CATALOG_IMG_PRD} | cut -d '@' -f2)
+        - export CATALOG_IMG_PRD_DIGEST=icr.io/cpopen/ibm-auditwebhook-operator-catalog@${CATALOG_DIGEST}
+        - echo ${CATALOG_IMG_PRD_DIGEST}
+        #Display images
+        - echo ${OPERATOR_IMG_PRD_DIGEST}
+        - echo ${BUNDLE_IMG_PRD_DIGEST}
+        - echo ${CATALOG_IMG_PRD_DIGEST}
+        - echo ${TRAVIS_TAG}
+        - cd ../../../../
+
+    - stage: validate content
+      script:
+        # Package for release
+        - if [[ ! -z "$TRAVIS_TAG" ]] ; then $toolsPath/release/bin/package.sh; fi
+        # Lint and install/test charts (if cv-tests exist)
+        - $toolsPath/cv-test/bin/validateContent.sh
+        - git clone https://$GITHUB_TOKEN@github.ibm.com/PrivateCloud-analytics/cpd-case-repo;
+        - ${TRAVIS_BUILD_DIR}/cpd-case-repo/scripts/caserepo.sh
+
+script: echo "Override default script"
+
+deploy:
+  # scp helm repo(s) to location identified (Note: SSHPASS env variable must contain password)
+  - provider: script
+    skip_cleanup: true
+    script:  $toolsPath/build/bin/deployHelmRepo.sh
+    on:
+      all_branches: true
+  # Publish tagged release
+  - provider: releases
+    skip_cleanup: true
+    api_key: $GITHUB_TOKEN
+    file_glob: true
+    file: repo/stable/*
+    on:
+      tags: true
