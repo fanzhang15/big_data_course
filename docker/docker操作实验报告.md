@@ -18,7 +18,7 @@
 ## 4.  **实验内容及步骤**
 ### 1.  **安装应用程序**
 1. 从 <https://codeload.github.com/docker/getting-started/zip/refs/heads/master>上下载示例使用的项目，并将压缩包解压到Ubuntu文件夹中
-2.  在解压的文件夹app内（保证dockerfile文件与package.json文件同层）打开控制台，用`touch Dockerfile`代码创建Dockerfile文件（不用加任何后缀不然会变成文本文件，无法使用），并打开Dockerfile文件输入以下代码，保存以下内容：
+2.  在解压的文件夹app内（保证dockerfile文件与package.json文件同层）打开控制台，用 `touch Dockerfile` 代码创建Dockerfile文件（不用加任何后缀不然会变成文本文件，无法使用），并打开Dockerfile文件输入以下代码，保存以下内容：
     ```
      \# syntax=docker/dockerfile:1  
      FROM node:12-alpine  
