@@ -172,15 +172,15 @@
 
 3.  指定运行MySQL的主机名、用户名、密码及连接后使用的数据库，并将容器连接到应用程序网络
     ```
-   docker run -dp 3000:3000 \
-  -w /app -v "$(pwd):/app" \
-  --network todo-app \
-  -e MYSQL_HOST=mysql \
-  -e MYSQL_USER=root \
-  -e MYSQL_PASSWORD=secret \
-  -e MYSQL_DB=todos \
-  node:12-alpine \
-  sh -c "yarn install && yarn run dev"
+        docker run -dp 3000:3000 \
+        -w /app -v "$(pwd):/app" \
+        --network todo-app \
+        -e MYSQL_HOST=mysql \
+        -e MYSQL_USER=root \
+        -e MYSQL_PASSWORD=secret \
+        -e MYSQL_DB=todos \
+        node:12-alpine \
+        sh -c "yarn install && yarn run dev"
     ```
     此时，若使用`docker logs <容器id> `命令，便可看到其中有以下信息，表明它正在使用mysql数据库
 
