@@ -86,7 +86,7 @@
     > docker run -it ubuntu ls /
 
 4.  继续并使用`docker rm -f <容器id>`删除第一个容器
-5.  使用`docker volume create <数据卷名称>`命令创建数据卷，并使用`docker volume ls`查看是否存在同名的容器，若有则使用`docker rm -f <容器id>`将其删除
+5.  使用`docker volume create <数据卷名称>`命令创建数据卷，并使用`docker ps`查看是否存在同名的容器，若有则使用`docker rm -f <容器id>`将其删除
 6.  使用命令`docker run -dp 3000:3000 -v todo-db:/etc/todos getting-started`创建启动数据卷并挂载到/etc/todos路径上，且可以通过浏览器启动
 
 
