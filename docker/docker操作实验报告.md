@@ -105,13 +105,14 @@
 1.  确保没有docker内没有活跃的容器后，用`cd /home/???/getting-started-master/app `(问号为getting-started-master所在位置)转到app文件夹中，使用命令
     ```
      docker run -dp 3000:3000 \  
-     -w /app -v "\$(pwd):/app" \  
+     -w /app -v "$(pwd):/app" \  
      node:12-alpine \
-     sh -c "yarn install && yarn run dev"  
-     （-dp 3000:3000 ：以后台模式运行并创建端口映射  
-     -w /app ：设置“工作目录”或命令将运行的当前目录  
-     -v "\$(pwd):/app" ：将容器中主机的当前目录绑定挂载到/app目录中
+     sh -c "yarn install && yarn run dev" 
     ```
+    > （-dp 3000:3000 ：以后台模式运行并创建端口映射  
+    > -w /app ：设置“工作目录”或命令将运行的当前目录  
+    > -v "\$(pwd):/app" ：将容器中主机的当前目录绑定挂载到/app目录中
+   
     > node:12-alpine ：要使用的镜像。这是来自 Dockerfile 的应用程序的基础镜像
 
     > sh -c "yarn install && yarn run dev"：使用sh（alpine 没有bash）启动一个 shell 并运行yarn install以安装所有依赖项，然后运行yarn run dev。）
