@@ -11,9 +11,9 @@
 ## 4.  **实验内容及步骤**
 ### 1.  安装虚拟机
 1.  前往VMware workstation官网下载VMware workstation Pro 16或直接使用<https://www.vmware.com/products/workstation-pro/workstation-pro-evaluation.html> 网址前往安装VMware workstation Pro 16
-2.  使用安装包安装完成，并上网找可用的许可证，完成对VMware 的激活
+2.  使用安装包安装完成，并上网找可用的许可证（如：ZF3R0-FHED2-M80TY-8QYGC-NPKYF），完成对VMware 的激活
 ### 2.  安装Ubuntu
-1. 前往镜像网站<http://mirrors.163.com/ubuntu-releases/> 下载Ubuntu 22.04镜像文件，这里使用的是网易镜像，也可以使用阿里云等镜像文件。
+1. 前往镜像网站<http://mirrors.163.com/ubuntu-releases/> ，点击22.04/进入下载Ubuntu22.04界面，再点击ubuntu-22.04.1-desktop-amd64.iso 下载Ubuntu 22.04 桌面版镜像文件，这里使用的是网易镜像，也可以使用阿里云等镜像文件。
 2. 点击打开.exe文件  
     > 新建虚拟机
 
