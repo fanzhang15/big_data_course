@@ -131,7 +131,7 @@
 
     <center><img src="media/8dcbc76dbc5f1c776f3fa47fa0c1e3f9.png"></center>
 
-4.  任意修改后，使用`docker stop \<容器id\>`将容器停止，并使用`docker build -t getting-started . `（注意：最后有个点）构建新镜像，出现下图即为成功
+4.  任意修改后，使用`docker stop <容器id>`将容器停止，并使用`docker build -t getting-started . `（注意：最后有个点）构建新镜像，出现下图即为成功
 
 
     <center><img src="media/f7b67ac88feecebbef399eb7de57c179.png"></center>
