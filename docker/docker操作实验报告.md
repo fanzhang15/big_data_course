@@ -104,13 +104,13 @@
 ### 5.  **使用绑定挂载**
 1.  确保没有docker内没有活跃的容器后，用`cd /home/???/getting-started-master/app `(问号为getting-started-master所在位置)转到app文件夹中，使用命令
     ```
-     docker run -dp 3000:3000 \\  
-     \-w /app -v "\$(pwd):/app" \\  
-     node:12-alpine \\  
+     docker run -dp 3000:3000 \  
+     -w /app -v "\$(pwd):/app" \  
+     node:12-alpine \
      sh -c "yarn install && yarn run dev"  
      （-dp 3000:3000 ：以后台模式运行并创建端口映射  
-     \-w /app ：设置“工作目录”或命令将运行的当前目录  
-     \-v "\$(pwd):/app" ：将容器中主机的当前目录绑定挂载到/app目录中
+     -w /app ：设置“工作目录”或命令将运行的当前目录  
+     -v "\$(pwd):/app" ：将容器中主机的当前目录绑定挂载到/app目录中
     ```
     > node:12-alpine ：要使用的镜像。这是来自 Dockerfile 的应用程序的基础镜像
 
@@ -137,11 +137,11 @@
 ### 6.  **多容器应用**
 1.  启动MySQL，首先用命令`docker network create todo-app`创建网络，再使用以下命令启动MySQL容器并将其连接到网络
     ```
-    docker run -d \\
-    \--network todo-app --network-alias mysql \\
-    \-v todo-mysql-data:/var/lib/mysql \\
-    \-e MYSQL_ROOT_PASSWORD=secret \\
-    \-e MYSQL_DATABASE=todos \\
+    docker run -d \
+    --network todo-app --network-alias mysql \
+    -v todo-mysql-data:/var/lib/mysql \
+    -e MYSQL_ROOT_PASSWORD=secret \
+    -e MYSQL_DATABASE=todos \
     mysql:5.7
     ```
     显示以下图片即为成功安装，并使用`docker exec -it \<MySQL容器id\> mysql -u root -p `命令进行检测是否已连接
