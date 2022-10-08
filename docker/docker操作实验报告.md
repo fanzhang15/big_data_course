@@ -158,7 +158,7 @@
 
     <center><img src="media/57cbd033e91b7220302021ced1d776fe.png"></center>
 
-2.  用命令`exit` 返回机器上原本的shell，并使用nicolaka/netshoot 镜像启动一个新容器。确保将其连接到同一网络，命令如下：
+2.  用命令`exit;` 返回机器上原本的shell，并使用nicolaka/netshoot 镜像启动一个新容器。确保将其连接到同一网络，命令如下：
 
     > docker run -it --network todo-app nicolaka/netshoot
 
