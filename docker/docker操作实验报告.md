@@ -104,10 +104,10 @@
 ### 5.  **使用绑定挂载**
 1.  确保没有docker内没有活跃的容器后，用`cd /home/???/getting-started-master/app `(问号为getting-started-master所在位置)转到app文件夹中，使用命令
     ```
-     docker run -dp 3000:3000 \  
-     -w /app -v "$(pwd):/app" \  
+      docker run -dp 3000:3000 \
+     -w /app -v "$(pwd):/app" \
      node:12-alpine \
-     sh -c "yarn install && yarn run dev" 
+     sh -c "yarn install && yarn run dev"
     ```
     > （-dp 3000:3000 ：以后台模式运行并创建端口映射  
     > -w /app ：设置“工作目录”或命令将运行的当前目录  
