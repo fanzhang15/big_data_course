@@ -273,33 +273,33 @@
     version: "3.7"
 
     services:
-    app:
-        image: node:12-alpine
-        command: sh -c "yarn install && yarn run dev"
-        ports:
-        - 3000:3000
-        working_dir: /app
-        volumes:
-        - ./:/app
-        environment:
-        MYSQL_HOST: mysql
-        MYSQL_USER: root
-        MYSQL_PASSWORD: secret
-        MYSQL_DB: todos
+        app:
+           image: node:12-alpine
+           command: sh -c "yarn install && yarn run dev"
+           ports:
+             - 3000:3000
+           working_dir: /app
+           volumes:
+             - ./:/app
+           environment:
+             MYSQL_HOST: mysql
+             MYSQL_USER: root
+             MYSQL_PASSWORD: secret
+             MYSQL_DB: todos
 
-    mysql:
-        image: mysql:5.7
-        volumes:
-        - todo-mysql-data:/var/lib/mysql
-        environment:
-        MYSQL_ROOT_PASSWORD: secret
-        MYSQL_DATABASE: todos
+        mysql:
+           image: mysql:5.7
+           volumes:
+             - todo-mysql-data:/var/lib/mysql
+           environment:
+             MYSQL_ROOT_PASSWORD: secret
+             MYSQL_DATABASE: todos
 
     volumes:
-    todo-mysql-data:
+       todo-mysql-data:
 
     ```
-5.  完成docker-compose.yml文件后，就可以启动（启动前先确保没有其他正在运行的容器）。使用`docker-compose up -d`使用命令启动应用程序堆栈（-d标志表示后台运行所有内容），结果为以下输出
+5.  完成docker-compose.yml文件后，就可以启动（启动前先确保没有其他正在运行的容器）。使用`docker compose up -d`使用命令启动应用程序堆栈（-d标志表示后台运行所有内容），结果为以下输出
     <center><img src="media/ced9965997bb37d3531bdf5c23c18653.png"></center>
 
     再使用命令`docker-compose logs -f `查看日志，会看到很多日志信息，其中有以下输出：
