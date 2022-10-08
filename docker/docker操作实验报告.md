@@ -59,7 +59,7 @@
     <center><img src="media/94d10086fa8ed9d73fab88a48ec3303a.png"></center>
 
 ### 3.  **共享应用程序**
-1.  注册登录Docker Hub网站，并在网站上创建一个仓库，名称自取，权限定为Public
+1.  注册登录Docker Hub网站(hub.docker.com)，并在网站上创建一个仓库，名称自取，权限定为Public
 
 
     <center><img src="media/2222afca80bb659fb96ae23813e2546d.png" width="90%"></center>
