@@ -145,7 +145,7 @@
     -e MYSQL_DATABASE=todos \
     mysql:5.7
     ```
-    显示以下图片即为成功安装，并使用`docker exec -it \<MySQL容器id\> mysql -u root -p `命令进行检测是否已连接
+    显示以下图片即为成功安装，并使用`docker exec -it <MySQL容器id> mysql -u root -p `命令进行检测是否已连接
 
 
     <center><img src="media/e07207459a89be0920a781ca730e9d0f.png" width="90%"></center>
